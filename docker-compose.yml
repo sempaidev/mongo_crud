@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  mongodb_container:
+    image: mongo:latest
+    container_name: mongodb_container
+    environment:
+      MONGO_INITDB_DATABASE: fastapi
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+    networks:
+      traefik_network:
+  
+  #db:
+    #image: postgres:12.8
+    #env_file: .env
+    #volumes:
+    #  - db_data_intranet:/var/lib/postgresql/data/pgdata
+
+  fastapi:
+    container_name: crud_fastapi_mongo
+    env_file: .env
+
+    build:
+      context: ./
+     
+    depends_on:
+      - mongodb_container
+    ports:
+      - "90:8080"
+      
+    volumes:
+      - ./code:/code
+    
+    #para que pase por traefik
+    labels:
+      - "traefik.http.routers.fastapi.rule=Host(`fastapi.app.test`)"
+    networks:
+      traefik_network:
+
+networks:
+  traefik_network:
+    name: traefik_net
+    driver: bridge
+
+volumes:
+  mongodb_data_container:
+    external: true
